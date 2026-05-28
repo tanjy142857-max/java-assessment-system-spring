@@ -22,7 +22,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (userRepository.count() == 0) {
-            AdminStaff admin = new AdminStaff("ADM001", "admin", passwordEncoder.encode("admin123"), "Default Admin", "admin@apu.edu.my", "MALE", "MALAYSIAN", "1980-01-01");
+            AdminStaff admin = new AdminStaff("ADM001", "admin", passwordEncoder.encode("admin123"), "Default Admin", "admin@university.edu", "MALE", "MALAYSIAN", "1980-01-01");
             userRepository.save(admin);
         }
 
