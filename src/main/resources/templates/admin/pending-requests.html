@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Registration Requests</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #21618c;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/admin/dashboard">Admin Panel</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text text-white me-2" sec:authentication="name"></span>
+                <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                <a class="nav-link" href="/admin/users">Users</a>
+                <a class="nav-link active" href="/admin/pending">Pending</a>
+                <a class="nav-link" href="/admin/classes">Classes</a>
+                <a class="nav-link" href="/admin/grading">Grading</a>
+                <form th:action="@{/logout}" method="post" class="d-flex">
+                    <button class="btn btn-sm btn-outline-light" type="submit">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Pending Registration Requests</h2>
+        <span class="badge fs-6" style="background-color: #c0392b;"
+              th:text="${#lists.size(requests)} + ' pending'">0 pending</span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Intake</th>
+                        <th>Request Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="req : ${requests}">
+                        <td th:text="${req.id}">1</td>
+                        <td th:text="${req.username}">jdoe</td>
+                        <td th:text="${req.fullName}">John Doe</td>
+                        <td th:text="${req.email}">john@example.com</td>
+                        <td th:text="${req.intakeCode}">UCDF2F2401</td>
+                        <td th:text="${#temporals.format(req.requestDate, 'dd-MM-yyyy HH:mm')}">25-05-2026 14:30</td>
+                        <td>
+                            <form th:action="@{'/admin/pending/approve/' + ${req.id}}" method="post"
+                                  onsubmit="return confirm('Approve registration for ' +
+                                  this.getAttribute('data-username') + '?');"
+                                  th:attr="data-username=${req.username}"
+                                  class="d-inline">
+                                <button class="btn btn-sm btn-success" type="submit">
+                                    <i class="bi bi-check-lg"></i> Approve
+                                </button>
+                            </form>
+                            <form th:action="@{'/admin/pending/reject/' + ${req.id}}" method="post"
+                                  onsubmit="return confirm('Reject registration for ' +
+                                  this.getAttribute('data-username') + '? This cannot be undone.');"
+                                  th:attr="data-username=${req.username}"
+                                  class="d-inline">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    <i class="bi bi-x-lg"></i> Reject
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(requests)}">
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                            <p class="mt-3 fw-bold">No pending registration requests.</p>
+                            <p>All new registrations have been processed.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

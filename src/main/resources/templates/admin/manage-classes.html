@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Classes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #21618c;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/admin/dashboard">Admin Panel</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text text-white me-2" sec:authentication="name"></span>
+                <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                <a class="nav-link" href="/admin/users">Users</a>
+                <a class="nav-link" href="/admin/pending">Pending</a>
+                <a class="nav-link active" href="/admin/classes">Classes</a>
+                <a class="nav-link" href="/admin/grading">Grading</a>
+                <form th:action="@{/logout}" method="post" class="d-flex">
+                    <button class="btn btn-sm btn-outline-light" type="submit">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Classes</h2>
+        <button class="btn text-white" style="background-color: #1e8449;" data-bs-toggle="modal" data-bs-target="#addClassModal">
+            <i class="bi bi-plus-lg"></i> Add Class
+        </button>
+    </div>
+
+    <!-- Classes Table -->
+    <div class="card shadow-sm">
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Class Name</th>
+                        <th>Module</th>
+                        <th>Lecturer</th>
+                        <th>Semester</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="cls : ${classes}">
+                        <td th:text="${cls.id}">1</td>
+                        <td th:text="${cls.className}">Software Engineering 101</td>
+                        <td th:text="${cls.moduleName}">CT050-3-2-SE</td>
+                        <td th:text="${cls.lecturerName}">Dr. Smith</td>
+                        <td>
+                            <span class="badge" style="background-color: #21618c;"
+                                  th:text="${cls.semester}">Semester 1</span>
+                        </td>
+                        <td>
+                            <form th:action="@{'/admin/classes/delete/' + ${cls.id}}" method="post"
+                                  onsubmit="return confirm('Are you sure you want to delete class: ' +
+                                  this.getAttribute('data-classname') + '?');"
+                                  th:attr="data-classname=${cls.className}"
+                                  class="d-inline">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(classes)}">
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="mt-2">No classes found. Add your first class above.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal fade" id="addClassModal" tabindex="-1" aria-labelledby="addClassModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #1e8449;">
+                <h5 class="modal-title" id="addClassModalLabel"><i class="bi bi-plus-circle"></i> Add New Class</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form th:action="@{/admin/classes/add}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="className" class="form-label">Class Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="className" name="className"
+                               placeholder="e.g. Software Engineering 101" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="moduleId" class="form-label">Module <span class="text-danger">*</span></label>
+                        <select class="form-select" id="moduleId" name="moduleId" required>
+                            <option value="">-- Select Module --</option>
+                            <option th:each="module : ${modules}"
+                                    th:value="${module.id}"
+                                    th:text="${module.name}">Module Name</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lecturerId" class="form-label">Lecturer <span class="text-danger">*</span></label>
+                        <select class="form-select" id="lecturerId" name="lecturerId" required>
+                            <option value="">-- Select Lecturer --</option>
+                            <option th:each="lecturer : ${lecturers}"
+                                    th:value="${lecturer.id}"
+                                    th:text="${lecturer.fullName}">Lecturer Name</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="semester" class="form-label">Semester <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="semester" name="semester"
+                               placeholder="e.g. Semester 1, 2026" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn text-white" style="background-color: #1e8449;">
+                        <i class="bi bi-check-lg"></i> Add Class
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

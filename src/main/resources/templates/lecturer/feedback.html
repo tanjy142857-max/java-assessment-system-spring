@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Feedback</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #7b1fa2;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/lecturer/dashboard">Lecturer Panel</a>
+        <div class="navbar-nav ms-auto">
+            <span class="navbar-text text-white me-2" sec:authentication="name"></span>
+            <a class="nav-link" href="/lecturer/dashboard">Dashboard</a>
+            <a class="nav-link" href="/lecturer/assessments">Assessments & Grading</a>
+            <a class="nav-link active" href="/lecturer/feedback">Feedback</a>
+            <form th:action="@{/logout}" method="post" class="d-flex">
+                <button class="btn btn-sm btn-outline-light" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Student Feedback</h2>
+
+    <!-- Class Selector -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" th:action="@{/lecturer/feedback}" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label for="classId" class="form-label fw-bold">Select Class</label>
+                    <select class="form-select" id="classId" name="classId" onchange="this.form.submit()">
+                        <option value="">-- Choose a class --</option>
+                        <option th:each="cls : ${myClasses}"
+                                th:value="${cls.id}"
+                                th:text="${cls.className}"
+                                th:selected="${selectedClass != null && selectedClass.id == cls.id}">Class Name</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn text-white" style="background-color: #7b1fa2;">
+                        <i class="bi bi-arrow-right-circle"></i> Load
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Class Selected Content -->
+    <th:block th:if="${selectedClass != null}">
+        <div class="alert text-white" style="background-color: #7b1fa2;">
+            <strong><i class="bi bi-book"></i> Selected Class:</strong>
+            <span th:text="${selectedClass.className}">Class Name</span>
+        </div>
+
+        <div class="row g-4">
+            <!-- Students Table -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm">
+                    <div class="card-header" style="background-color: #7b1fa2; color: white;">
+                        <h5 class="mb-0"><i class="bi bi-people-fill"></i> Students & Grade Status</h5>
+                    </div>
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Student</th>
+                                    <th>Assessments Graded</th>
+                                    <th>Average</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="student, iterStat : ${feedbackData}"
+                                    th:classappend="${selectedStudent != null && selectedStudent.id == student.studentId} ? 'table-active' : ''"
+                                    style="cursor: pointer;"
+                                    onclick="selectStudent(this)"
+                                    th:attr="data-student-id=${student.studentId}">
+                                    <td th:text="${iterStat.count}">1</td>
+                                    <td th:text="${student.studentName}">John Doe</td>
+                                    <td>
+                                        <span th:text="${student.gradedCount}">0</span> /
+                                        <span th:text="${student.totalAssessments}">5</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${student.averageMarks != null}"
+                                              th:text="${#numbers.formatDecimal(student.averageMarks, 1, 1)}">85.0</span>
+                                        <span th:unless="${student.averageMarks != null}" class="text-muted">N/A</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success"
+                                              th:if="${student.gradedCount == student.totalAssessments}">Complete</span>
+                                        <span class="badge bg-warning text-dark"
+                                              th:if="${student.gradedCount > 0 && student.gradedCount < student.totalAssessments}">Partial</span>
+                                        <span class="badge bg-secondary"
+                                              th:if="${student.gradedCount == 0}">No Grades</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(feedbackData)}">
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                        <p class="mt-2">No student data available for this class.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback Form -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm">
+                    <div class="card-header" style="background-color: #1e8449; color: white;">
+                        <h5 class="mb-0">
+                            <i class="bi bi-chat-square-text"></i>
+                            <span th:if="${selectedStudent != null}">
+                                Feedback for <span th:text="${selectedStudent.fullName != null ? selectedStudent.fullName : selectedStudent.username}">Student</span>
+                            </span>
+                            <span th:unless="${selectedStudent != null}">Feedback</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Student Info Summary when selected -->
+                        <th:block th:if="${selectedStudent != null}">
+                            <div class="mb-3 p-3 rounded" style="background-color: #f3e5f5;">
+                                <h6 class="text-dark mb-2">Student Summary</h6>
+                                <table class="table table-sm table-borderless mb-0 small">
+                                    <tr>
+                                        <td class="text-muted">Name:</td>
+                                        <td class="fw-bold" th:text="${selectedStudent.fullName != null ? selectedStudent.fullName : selectedStudent.username}">John</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Assessments Graded:</td>
+                                        <td class="fw-bold">
+                                            <span th:text="${selectedStudent.gradedCount}">3</span> /
+                                            <span th:text="${selectedStudent.totalAssessments}">5</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Average:</td>
+                                        <td class="fw-bold"
+                                            th:if="${selectedStudent.averageMarks != null}"
+                                            th:text="${#numbers.formatDecimal(selectedStudent.averageMarks, 1, 1)}">85.0</td>
+                                        <td class="fw-bold text-muted" th:unless="${selectedStudent.averageMarks != null}">N/A</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- Existing Feedback Display -->
+                            <div class="mb-3" th:if="${selectedStudent.existingFeedback != null and !selectedStudent.existingFeedback.isEmpty()}">
+                                <label class="form-label fw-bold">Current Feedback</label>
+                                <div class="p-3 rounded" style="background-color: #e8f5e9;">
+                                    <p class="mb-0" th:text="${selectedStudent.existingFeedback}">Existing feedback text here.</p>
+                                </div>
+                            </div>
+
+                            <form th:action="@{/lecturer/feedback/save}" method="post">
+                                <input type="hidden" name="classId" th:value="${selectedClass.id}">
+                                <input type="hidden" name="studentId" th:value="${selectedStudent.studentId}">
+                                <div class="mb-3">
+                                    <label for="feedbackText" class="form-label fw-bold">
+                                        <span th:if="${selectedStudent.existingFeedback != null and !selectedStudent.existingFeedback.isEmpty()}">Update Feedback</span>
+                                        <span th:unless="${selectedStudent.existingFeedback != null and !selectedStudent.existingFeedback.isEmpty()}">Write Feedback</span>
+                                    </label>
+                                    <textarea class="form-control" id="feedbackText" name="feedbackText" rows="5"
+                                              placeholder="Enter your feedback for this student..."
+                                              th:text="${selectedStudent.existingFeedback}"></textarea>
+                                </div>
+                                <button type="submit" class="btn text-white w-100" style="background-color: #1e8449;">
+                                    <i class="bi bi-send"></i> Save Feedback
+                                </button>
+                            </form>
+                        </th:block>
+
+                        <!-- No Student Selected -->
+                        <th:block th:unless="${selectedStudent != null}">
+                            <div class="text-center py-4">
+                                <i class="bi bi-hand-index-thumb" style="font-size: 3rem; color: #adb5bd;"></i>
+                                <p class="mt-3 text-muted">Click on a student row from the table to view details and provide feedback.</p>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- No Class Selected Placeholder -->
+    <th:block th:unless="${selectedClass != null}">
+        <div class="text-center py-5">
+            <i class="bi bi-arrow-up-circle" style="font-size: 4rem; color: #7b1fa2;"></i>
+            <h4 class="mt-3 text-muted">Select a class above to get started</h4>
+            <p class="text-muted">View student grade status and provide feedback for each student.</p>
+        </div>
+    </th:block>
+</div>
+
+<script>
+    function selectStudent(row) {
+        const studentId = row.getAttribute('data-student-id');
+        const url = new URL(window.location.href);
+        url.searchParams.set('studentId', studentId);
+        window.location.href = url.toString();
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

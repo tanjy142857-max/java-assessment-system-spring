@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #21618c;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/admin/dashboard">Admin Panel</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text text-white me-2" sec:authentication="name"></span>
+                <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                <a class="nav-link active" href="/admin/users">Users</a>
+                <a class="nav-link" href="/admin/pending">Pending</a>
+                <a class="nav-link" href="/admin/classes">Classes</a>
+                <a class="nav-link" href="/admin/grading">Grading</a>
+                <form th:action="@{/logout}" method="post" class="d-flex">
+                    <button class="btn btn-sm btn-outline-light" type="submit">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Users</h2>
+        <button class="btn text-white" style="background-color: #21618c;" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="bi bi-plus-lg"></i> Add User
+        </button>
+    </div>
+
+    <!-- Role Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form th:action="@{/admin/users}" method="get" class="row g-3 align-items-end">
+                <div class="col-auto">
+                    <label for="roleFilter" class="form-label fw-bold">Filter by Role:</label>
+                    <select name="role" id="roleFilter" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Roles</option>
+                        <option value="ADMIN_STAFF" th:selected="${param.role == 'ADMIN_STAFF'}">Admin Staff</option>
+                        <option value="ACADEMIC_LEADER" th:selected="${param.role == 'ACADEMIC_LEADER'}">Academic Leader</option>
+                        <option value="LECTURER" th:selected="${param.role == 'LECTURER'}">Lecturer</option>
+                        <option value="STUDENT" th:selected="${param.role == 'STUDENT'}">Student</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <a href="/admin/users" class="btn btn-outline-secondary">Clear Filter</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card shadow-sm">
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.id}">1</td>
+                        <td th:text="${user.username}">jdoe</td>
+                        <td th:text="${user.fullName}">John Doe</td>
+                        <td th:text="${user.email}">john@example.com</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${user.role == 'ADMIN_STAFF'} ? 'bg-danger' :
+                                  (${user.role == 'ACADEMIC_LEADER'} ? 'bg-warning text-dark' :
+                                  (${user.role == 'LECTURER'} ? 'bg-info text-dark' : 'bg-success'))"
+                                  th:text="${user.role}">STUDENT</span>
+                        </td>
+                        <td>
+                            <form th:action="@{'/admin/users/delete/' + ${user.id}}" method="post"
+                                  onsubmit="return confirm('Are you sure you want to delete user: ' +
+                                  this.getAttribute('data-username') + '?');"
+                                  th:attr="data-username=${user.username}"
+                                  class="d-inline">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(users)}">
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="mt-2">No users found.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #21618c;">
+                <h5 class="modal-title" id="addUserModalLabel"><i class="bi bi-person-plus"></i> Add New User</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form th:action="@{/admin/users/add}" method="post">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fullName" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="fullName" name="fullName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                            <select class="form-select" id="role" name="role" required onchange="updateExtraField()">
+                                <option value="">-- Select Role --</option>
+                                <option value="ADMIN_STAFF">Admin Staff</option>
+                                <option value="ACADEMIC_LEADER">Academic Leader</option>
+                                <option value="LECTURER">Lecturer</option>
+                                <option value="STUDENT">Student</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="extra" class="form-label" id="extraLabel">Extra</label>
+                            <input type="text" class="form-control" id="extra" name="extra">
+                            <small class="text-muted" id="extraHint">Select a role first</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="gender" class="form-label">Gender</label>
+                            <select class="form-select" id="gender" name="gender">
+                                <option value="">-- Select --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="nationality" class="form-label">Nationality</label>
+                            <input type="text" class="form-control" id="nationality" name="nationality">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="dateOfBirth" name="dateOfBirth">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn text-white" style="background-color: #21618c;">
+                        <i class="bi bi-check-lg"></i> Add User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /* Update extra field label and hint based on selected role */
+    function updateExtraField() {
+        const role = document.getElementById('role').value;
+        const label = document.getElementById('extraLabel');
+        const hint = document.getElementById('extraHint');
+        switch (role) {
+            case 'STUDENT':
+                label.textContent = 'Intake Code';
+                hint.textContent = 'e.g. UCDF2F2401';
+                break;
+            case 'LECTURER':
+                label.textContent = 'Specialization';
+                hint.textContent = 'e.g. Software Engineering';
+                break;
+            case 'ACADEMIC_LEADER':
+                label.textContent = 'Department';
+                hint.textContent = 'e.g. School of Computing';
+                break;
+            case 'ADMIN_STAFF':
+                label.textContent = 'Staff ID';
+                hint.textContent = 'Optional staff identifier';
+                break;
+            default:
+                label.textContent = 'Extra';
+                hint.textContent = 'Select a role first';
+                break;
+        }
+    }
+
+    /* Preserve role filter selection display on page load */
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roleParam = urlParams.get('role');
+        if (roleParam) {
+            document.getElementById('roleFilter').value = roleParam;
+        }
+        /* Initialize extra field label if role is pre-selected in modal */
+        updateExtraField();
+    });
+</script>
+</body>
+</html>

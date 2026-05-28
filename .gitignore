@@ -1,0 +1,20 @@
+# Compiled output
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+nbproject/private/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# H2 database files (auto-generated)
+data/*.mv.db
+data/*.trace.db
+
+# Logs
+*.log

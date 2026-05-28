@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #21618c;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/admin/dashboard">Admin Panel</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text text-white me-2" sec:authentication="name"></span>
+                <a class="nav-link active" href="/admin/dashboard">Dashboard</a>
+                <a class="nav-link" href="/admin/users">Users</a>
+                <a class="nav-link" href="/admin/pending">Pending</a>
+                <a class="nav-link" href="/admin/classes">Classes</a>
+                <a class="nav-link" href="/admin/grading">Grading</a>
+                <form th:action="@{/logout}" method="post" class="d-flex">
+                    <button class="btn btn-sm btn-outline-light" type="submit">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Admin Dashboard</h2>
+
+    <!-- Stat Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card text-white" style="background-color: #21618c;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50">Total Users</h6>
+                            <h2 class="card-text" th:text="${totalUsers}">0</h2>
+                        </div>
+                        <i class="bi bi-people-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-white border-opacity-25">
+                    <a href="/admin/users" class="text-white text-decoration-none small">View users <i class="bi bi-arrow-right-short"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white" style="background-color: #1e8449;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50">Total Classes</h6>
+                            <h2 class="card-text" th:text="${totalClasses}">0</h2>
+                        </div>
+                        <i class="bi bi-journal-bookmark-fill" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-white border-opacity-25">
+                    <a href="/admin/classes" class="text-white text-decoration-none small">View classes <i class="bi bi-arrow-right-short"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white" style="background-color: #c0392b;">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-white-50">Pending Requests</h6>
+                            <h2 class="card-text" th:text="${pendingCount}">0</h2>
+                        </div>
+                        <i class="bi bi-hourglass-split" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-white border-opacity-25">
+                    <a href="/admin/pending" class="text-white text-decoration-none small">Review requests <i class="bi bi-arrow-right-short"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background-color: #21618c; color: white;">
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="/admin/users" class="text-decoration-none">
+                                <div class="card border text-center p-3 h-100">
+                                    <i class="bi bi-people-fill" style="font-size: 2rem; color: #21618c;"></i>
+                                    <h6 class="mt-2 text-dark">Manage Users</h6>
+                                    <small class="text-muted">Add, edit, or remove users</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/pending" class="text-decoration-none">
+                                <div class="card border text-center p-3 h-100">
+                                    <i class="bi bi-clock-history" style="font-size: 2rem; color: #c0392b;"></i>
+                                    <h6 class="mt-2 text-dark">Pending Requests</h6>
+                                    <small class="text-muted">Approve or reject registrations</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/classes" class="text-decoration-none">
+                                <div class="card border text-center p-3 h-100">
+                                    <i class="bi bi-journal-bookmark-fill" style="font-size: 2rem; color: #1e8449;"></i>
+                                    <h6 class="mt-2 text-dark">Manage Classes</h6>
+                                    <small class="text-muted">Create and manage classes</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/grading" class="text-decoration-none">
+                                <div class="card border text-center p-3 h-100">
+                                    <i class="bi bi-bar-chart-fill" style="font-size: 2rem; color: #e67e22;"></i>
+                                    <h6 class="mt-2 text-dark">Grading System</h6>
+                                    <small class="text-muted">Configure APU grade levels</small>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APU Grading System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #21618c;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/admin/dashboard">Admin Panel</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text text-white me-2" sec:authentication="name"></span>
+                <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                <a class="nav-link" href="/admin/users">Users</a>
+                <a class="nav-link" href="/admin/pending">Pending</a>
+                <a class="nav-link" href="/admin/classes">Classes</a>
+                <a class="nav-link active" href="/admin/grading">Grading</a>
+                <form th:action="@{/logout}" method="post" class="d-flex">
+                    <button class="btn btn-sm btn-outline-light" type="submit">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>APU Grading System</h2>
+        <div>
+            <button class="btn btn-outline-success me-2" type="button" onclick="addGradeRow()">
+                <i class="bi bi-plus-lg"></i> Add Row
+            </button>
+            <button class="btn text-white" style="background-color: #21618c;" type="button"
+                    onclick="submitGrades()">
+                <i class="bi bi-save"></i> Save All
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header text-white" style="background-color: #21618c;">
+            <h5 class="mb-0">Grade Configuration</h5>
+        </div>
+        <div class="card-body table-responsive">
+            <p class="text-muted mb-3">Edit grade levels below. Marks are in percentage (0-100). Changes are not saved until you click "Save All".</p>
+
+            <form id="gradingForm" th:action="@{/admin/grading/save}" method="post">
+                <table class="table table-hover align-middle" id="gradingTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 15%;">Grade</th>
+                            <th style="width: 20%;">Min Mark %</th>
+                            <th style="width: 20%;">Max Mark %</th>
+                            <th style="width: 30%;">Description</th>
+                            <th style="width: 15%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gradingTableBody">
+                        <tr th:each="grade, iterStat : ${gradeLevels}" class="grade-row">
+                            <td>
+                                <input type="text" class="form-control form-control-sm" name="grades"
+                                       th:value="${grade.grade}" required readonly style="background-color: #e9ecef;">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm" name="minMarks"
+                                       th:value="${grade.minMark}" required min="0" max="100" step="0.01"
+                                       onchange="validateRow(this)">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm" name="maxMarks"
+                                       th:value="${grade.maxMark}" required min="0" max="100" step="0.01"
+                                       onchange="validateRow(this)">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" name="descriptions"
+                                       th:value="${grade.description}" required>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" type="button"
+                                        onclick="removeGradeRow(this)" title="Remove row">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div id="emptyState" class="text-center text-muted py-4" style="display: none;">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <p class="mt-2">No grade levels configured. Click "Add Row" to create one.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11;">
+    <div id="saveToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage">
+                <i class="bi bi-check-circle-fill me-2"></i> Grades saved successfully!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /**
+     * Validate that min <= max for a given row.
+     */
+    function validateRow(input) {
+        const row = input.closest('.grade-row');
+        const minInput = row.querySelector('input[name="minMarks"]');
+        const maxInput = row.querySelector('input[name="maxMarks"]');
+        const minVal = parseFloat(minInput.value);
+        const maxVal = parseFloat(maxInput.value);
+
+        if (!isNaN(minVal) && !isNaN(maxVal) && minVal > maxVal) {
+            input.classList.add('is-invalid');
+            if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('invalid-feedback')) {
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.textContent = 'Min must be less than or equal to Max';
+                input.parentNode.appendChild(feedback);
+            }
+        } else {
+            input.classList.remove('is-invalid');
+            const feedback = input.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.remove();
+            }
+        }
+
+        updateEmptyState();
+    }
+
+    /**
+     * Add a new empty grade row.
+     */
+    function addGradeRow() {
+        const tbody = document.getElementById('gradingTableBody');
+        const row = document.createElement('tr');
+        row.className = 'grade-row';
+        row.innerHTML = `
+            <td>
+                <input type="text" class="form-control form-control-sm" name="grades"
+                       placeholder="e.g. A+" required>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" name="minMarks"
+                       placeholder="0" required min="0" max="100" step="0.01"
+                       onchange="validateRow(this)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" name="maxMarks"
+                       placeholder="100" required min="0" max="100" step="0.01"
+                       onchange="validateRow(this)">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm" name="descriptions"
+                       placeholder="e.g. Excellent" required>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" type="button"
+                        onclick="removeGradeRow(this)" title="Remove row">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>`;
+        tbody.appendChild(row);
+
+        /* Focus on the new grade input */
+        const gradeInput = row.querySelector('input[name="grades"]');
+        gradeInput.focus();
+
+        updateEmptyState();
+    }
+
+    /**
+     * Remove a grade row from the table.
+     */
+    function removeGradeRow(button) {
+        const row = button.closest('.grade-row');
+        const gradeInput = row.querySelector('input[name="grades"]');
+        const gradeName = gradeInput ? gradeInput.value || 'this row' : 'this row';
+
+        if (confirm('Remove grade level: ' + gradeName + '?')) {
+            row.remove();
+            updateEmptyState();
+        }
+    }
+
+    /**
+     * Toggle the empty state message based on whether rows exist.
+     */
+    function updateEmptyState() {
+        const tbody = document.getElementById('gradingTableBody');
+        const emptyState = document.getElementById('emptyState');
+        const table = document.getElementById('gradingTable');
+        const rows = tbody.querySelectorAll('.grade-row');
+
+        if (rows.length === 0) {
+            table.style.display = 'none';
+            emptyState.style.display = 'block';
+        } else {
+            table.style.display = '';
+            emptyState.style.display = 'none';
+        }
+    }
+
+    /**
+     * Submit the grading form via AJAX so the page does not reload.
+     */
+    function submitGrades() {
+        const form = document.getElementById('gradingForm');
+        const rows = document.querySelectorAll('#gradingTableBody .grade-row');
+        let valid = true;
+
+        /* Validate each row before submission */
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input[required]');
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+
+            /* Check min/max relationship */
+            const minInput = row.querySelector('input[name="minMarks"]');
+            const maxInput = row.querySelector('input[name="maxMarks"]');
+            if (minInput && maxInput) {
+                const minVal = parseFloat(minInput.value);
+                const maxVal = parseFloat(maxInput.value);
+                if (!isNaN(minVal) && !isNaN(maxVal) && minVal > maxVal) {
+                    minInput.classList.add('is-invalid');
+                    maxInput.classList.add('is-invalid');
+                    valid = false;
+                }
+            }
+        });
+
+        if (!valid) {
+            showToast('Please fix validation errors before saving.', 'danger', 'bg-danger');
+            return;
+        }
+
+        /* Build FormData from all rows */
+        const formData = new FormData();
+        rows.forEach(row => {
+            const grade = row.querySelector('input[name="grades"]');
+            const min = row.querySelector('input[name="minMarks"]');
+            const max = row.querySelector('input[name="maxMarks"]');
+            const desc = row.querySelector('input[name="descriptions"]');
+
+            if (grade) formData.append('grades', grade.value);
+            if (min) formData.append('minMarks', min.value);
+            if (max) formData.append('maxMarks', max.value);
+            if (desc) formData.append('descriptions', desc.value);
+        });
+
+        fetch(form.getAttribute('action'), {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                showToast('Grades saved successfully!', 'success', 'bg-success');
+                /* Clear all is-invalid classes */
+                document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            } else {
+                showToast('Error saving grades. Please try again.', 'danger', 'bg-danger');
+            }
+        })
+        .catch(error => {
+            showToast('Network error. Please check your connection.', 'danger', 'bg-danger');
+        });
+    }
+
+    /**
+     * Show a Bootstrap toast notification.
+     */
+    function showToast(message, type, bgClass) {
+        const toastEl = document.getElementById('saveToast');
+        const messageEl = document.getElementById('toastMessage');
+
+        /* Update toast styling */
+        toastEl.className = 'toast align-items-center text-white border-0 ' + bgClass;
+        messageEl.innerHTML = '<i class="bi ' +
+            (type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill') +
+            ' me-2"></i>' + message;
+
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+    }
+
+    /* Initialize empty state on page load */
+    document.addEventListener('DOMContentLoaded', function () {
+        updateEmptyState();
+    });
+</script>
+</body>
+</html>

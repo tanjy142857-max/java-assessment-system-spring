@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="card shadow">
+        <div class="card-body p-4">
+            <h3 class="text-center mb-4">Student Registration</h3>
+            <p class="text-muted text-center">Register here. Admin will approve your account.</p>
+
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <form th:action="@{/register}" method="post">
+                <div class="mb-2"><input type="text" name="username" class="form-control" placeholder="Username" required></div>
+                <div class="mb-2"><input type="password" name="password" class="form-control" placeholder="Password" required></div>
+                <div class="mb-2"><input type="text" name="fullName" class="form-control" placeholder="Full Name" required></div>
+                <div class="mb-2"><input type="email" name="email" class="form-control" placeholder="Email" required></div>
+                <div class="mb-2"><input type="text" name="intakeCode" class="form-control" placeholder="Intake Code (e.g. Y1S1)"></div>
+                <div class="mb-2">
+                    <select name="gender" class="form-select">
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <select name="nationality" class="form-select">
+                        <option value="MALAYSIAN">Malaysian</option>
+                        <option value="CHINESE">Chinese</option>
+                        <option value="INDIAN">Indian</option>
+                        <option value="SAUDI">Saudi</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="mb-3"><input type="date" name="dateOfBirth" class="form-control" value="2000-01-01"></div>
+                <button type="submit" class="btn btn-success w-100">Register</button>
+            </form>
+            <div class="text-center mt-3"><a th:href="@{/login}">Back to Login</a></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
